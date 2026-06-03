@@ -1,26 +1,34 @@
 # SignageMind AI
 
-AI-powered knowledge base for digital signage support.
+![Next.js](https://img.shields.io/badge/Next.js-15-black?logo=nextdotjs)
+![TypeScript](https://img.shields.io/badge/TypeScript-5.x-3178C6?logo=typescript)
+![License](https://img.shields.io/badge/License-MIT-blue)
+
+Knowledge assistant for digital signage support. Ask platform and troubleshooting questions, get sourced answers, and keep chat sessions across restarts.
+
+## What It Does
+
+SignageMind AI is a support knowledge base for signage teams. It answers questions from built-in support content, cites matching knowledge entries, and saves chat sessions with durable file-backed storage.
 
 ## Features
 
-- Internal documentation upload and ingestion
-- Question answering with sourced responses
-- Troubleshooting step generation
-- Search and RAG capabilities
-- Support team assistance
+- Chat interface for signage support questions.
+- Built-in knowledge entries for SCOS, Windows, FireOS, Tizen, webOS, iframe playback, and general troubleshooting.
+- Sourced responses with matched knowledge entries.
+- Troubleshooting steps for common device and player issues.
+- Durable chat session history through file-backed JSON storage.
+- Works without ingestion because the initial knowledge base ships with the app.
 
 ## Tech Stack
 
-- Next.js 15
-- React
-- TypeScript
+- Next.js 15 App Router
+- React 19
+- TypeScript strict mode
 - Tailwind CSS
-- Vector database
-- Search engine
-- AI API integration
+- Anthropic SDK and OpenAI SDK
+- File-backed JSON storage through a repository interface
 
-## Getting Started
+## Setup
 
 ```bash
 pnpm install
@@ -28,7 +36,7 @@ cp .env.example .env.local
 pnpm dev
 ```
 
-Open http://localhost:3000.
+Open `http://localhost:3000`.
 
 ## Environment Variables
 
@@ -40,9 +48,15 @@ SIGNAGE_DATA_DIR=.signage-data
 SIGNAGE_STORAGE_DRIVER=file
 ```
 
-The built-in knowledge base works without ingestion. AI answers require either `ANTHROPIC_API_KEY` or `OPENAI_API_KEY`.
+AI answers require either `ANTHROPIC_API_KEY` or `OPENAI_API_KEY`. The built-in knowledge base remains available without ingestion.
 
-Chat sessions are stored in file-backed JSON under `SIGNAGE_DATA_DIR`. Use a persistent mounted volume in production. Set `SIGNAGE_STORAGE_DRIVER=memory` only when you want disposable demo data.
+## Production Storage
+
+Production uses file-backed JSON under `SIGNAGE_DATA_DIR`.
+
+- Mount `SIGNAGE_DATA_DIR` as persistent writable storage.
+- Keep `SIGNAGE_STORAGE_DRIVER=file` in production.
+- Use `SIGNAGE_STORAGE_DRIVER=memory` only for disposable demos.
 
 ## Production Checks
 
@@ -53,9 +67,13 @@ pnpm build
 
 ## Release Notes
 
-- Deploy with `SIGNAGE_DATA_DIR` set to a persistent writable volume.
-- Keep `SIGNAGE_STORAGE_DRIVER=file` for production.
 - Do not commit `.env`, `.env.local`, or generated `.signage-data` files.
+- Keep AI provider keys in the deployment environment.
+- Verify the persistent storage volume before public release.
+
+## Author
+
+Built by [Sudarshan Chaudhari](https://github.com/SUDARSHANCHAUDHARI) for **SudarshanTechLabs**.
 
 ## License
 
