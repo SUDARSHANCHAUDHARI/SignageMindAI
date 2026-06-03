@@ -22,7 +22,30 @@ AI-powered knowledge base for digital signage support.
 
 ## Getting Started
 
-Coming soon...
+```bash
+pnpm install
+cp .env.example .env.local
+pnpm dev
+```
+
+Open http://localhost:3000.
+
+## Environment Variables
+
+```env
+AI_PROVIDER=claude
+ANTHROPIC_API_KEY=your_key_here
+OPENAI_API_KEY=your_key_here
+```
+
+The built-in knowledge base works without ingestion. AI answers require either `ANTHROPIC_API_KEY` or `OPENAI_API_KEY`.
+
+## Production Checks
+
+```bash
+pnpm typecheck
+pnpm build
+```
 
 ## License
 

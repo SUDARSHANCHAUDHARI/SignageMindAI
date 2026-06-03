@@ -1,36 +1,18 @@
 import type { ChatSession, Message } from './types'
+import { getChatRepository } from './storage'
 
-const sessions = new Map<string, ChatSession>()
-
-export function createSession(id: string, firstMessage?: string): ChatSession {
-  const session: ChatSession = {
-    id,
-    title: firstMessage ? firstMessage.slice(0, 60) : 'New conversation',
-    messages: [],
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-  }
-  sessions.set(id, session)
-  return session
+export async function createSession(id: string, firstMessage?: string): Promise<ChatSession> {
+  return getChatRepository().createSession(id, firstMessage)
 }
 
-export function getSession(id: string): ChatSession | undefined {
-  return sessions.get(id)
+export async function getSession(id: string): Promise<ChatSession | undefined> {
+  return getChatRepository().getSession(id)
 }
 
-export function listSessions(): ChatSession[] {
-  return Array.from(sessions.values()).sort(
-    (a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
-  )
+export async function listSessions(): Promise<ChatSession[]> {
+  return getChatRepository().listSessions()
 }
 
-export function addMessage(sessionId: string, message: Message): ChatSession | null {
-  const session = sessions.get(sessionId)
-  if (!session) return null
-  session.messages.push(message)
-  session.updatedAt = new Date().toISOString()
-  if (session.messages.length === 1) {
-    session.title = message.content.slice(0, 60)
-  }
-  return session
+export async function addMessage(sessionId: string, message: Message): Promise<ChatSession | null> {
+  return getChatRepository().addMessage(sessionId, message)
 }

@@ -5,6 +5,9 @@ import { chat } from '@/lib/ai'
 import { createSession, getSession, addMessage } from '@/lib/store'
 import type { Message } from '@/lib/types'
 
+const MAX_MESSAGE_CHARS = 8_000
+const MAX_SESSION_ID_CHARS = 120
+
 const SYSTEM_PROMPT = `You are SignageMind AI, an expert support chatbot specialized in digital signage systems. You have deep knowledge of:
 - SCOS (ScreenCloud OS) — crashes, updates, display issues, network
 - Windows signage — performance, kiosk mode, DirectX issues
@@ -28,9 +31,15 @@ export async function POST(request: NextRequest) {
     if (!message || typeof message !== 'string') {
       return NextResponse.json({ error: 'message is required' }, { status: 400 })
     }
+    if (message.length > MAX_MESSAGE_CHARS) {
+      return NextResponse.json({ error: `message must be ${MAX_MESSAGE_CHARS} characters or fewer` }, { status: 413 })
+    }
+    if (sessionId && sessionId.length > MAX_SESSION_ID_CHARS) {
+      return NextResponse.json({ error: `sessionId must be ${MAX_SESSION_ID_CHARS} characters or fewer` }, { status: 400 })
+    }
 
     const sid = sessionId ?? nanoid()
-    const session = getSession(sid) ?? createSession(sid, message)
+    await getSession(sid) ?? await createSession(sid, message)
 
     // Retrieve relevant knowledge
     const sources = retrieve(message, 3)
@@ -55,7 +64,7 @@ User question: ${message}`
       sources: [],
       createdAt: new Date().toISOString(),
     }
-    addMessage(sid, userMsg)
+    await addMessage(sid, userMsg)
 
     // Call AI
     let answer: string
@@ -75,7 +84,7 @@ User question: ${message}`
       sources,
       createdAt: new Date().toISOString(),
     }
-    addMessage(sid, assistantMsg)
+    await addMessage(sid, assistantMsg)
 
     return NextResponse.json({ sessionId: sid, message: assistantMsg })
   } catch (error) {
