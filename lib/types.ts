@@ -25,4 +25,4 @@ export interface KnowledgeEntry {
   tags: string[]
 }
 
-export type Platform = 'SCOS' | 'Windows' | 'FireOS' | 'Tizen' | 'webOS' | 'Iframe' | 'General'
+export type Platform = 'Signage device' | 'Windows' | 'FireOS' | 'Tizen' | 'webOS' | 'Iframe' | 'General'

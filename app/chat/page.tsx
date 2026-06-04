@@ -14,7 +14,7 @@ interface ApiMessage {
 
 function PlatformBadge({ platform }: { platform: string }) {
   const colors: Record<string, string> = {
-    SCOS: 'bg-blue-900 text-blue-300',
+    'Signage device': 'bg-blue-900 text-blue-300',
     Windows: 'bg-cyan-900 text-cyan-300',
     FireOS: 'bg-orange-900 text-orange-300',
     Tizen: 'bg-indigo-900 text-indigo-300',
@@ -103,7 +103,7 @@ function ChatContent() {
       <div className="flex-1 overflow-y-auto px-4 py-6 space-y-6">
         {messages.length === 0 && (
           <div className="text-center text-gray-600 mt-20 text-sm">
-            Ask anything about SCOS, Tizen, webOS, FireOS, Windows signage, or iframe issues.
+            Ask anything about signage devices, Tizen, webOS, FireOS, Windows signage, or iframe issues.
           </div>
         )}
 
@@ -161,7 +161,7 @@ function ChatContent() {
           <input
             value={input}
             onChange={e => setInput(e.target.value)}
-            placeholder="Ask about SCOS, Tizen, webOS, FireOS, iframe issues..."
+            placeholder="Ask about signage devices, Tizen, webOS, FireOS, iframe issues..."
             className="flex-1 bg-gray-900 border border-gray-700 rounded-xl px-4 py-3 text-sm text-gray-100 placeholder-gray-600 focus:outline-none focus:border-blue-600"
           />
           <button

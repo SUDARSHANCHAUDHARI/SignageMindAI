@@ -1,7 +1,7 @@
 import Link from 'next/link'
 
 const PLATFORMS = [
-  { name: 'SCOS', icon: '🖥', color: 'bg-blue-900 border-blue-700' },
+  { name: 'Signage device', icon: '🖥', color: 'bg-blue-900 border-blue-700' },
   { name: 'Windows', icon: '🪟', color: 'bg-cyan-900 border-cyan-700' },
   { name: 'FireOS', icon: '🔥', color: 'bg-orange-900 border-orange-700' },
   { name: 'Tizen', icon: '📺', color: 'bg-indigo-900 border-indigo-700' },
@@ -11,7 +11,7 @@ const PLATFORMS = [
 
 const SAMPLE_QUESTIONS = [
   'Why is my iframe blocked by X-Frame-Options?',
-  'SCOS device shows black screen after update',
+  'Signage device shows black screen after update',
   'How do I sideload an app on Fire TV?',
   'Samsung Tizen display shows white screen',
   'How to set portrait mode on LG webOS display?',

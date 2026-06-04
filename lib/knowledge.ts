@@ -1,63 +1,63 @@
 import type { KnowledgeEntry } from './types'
 
 export const KNOWLEDGE_BASE: KnowledgeEntry[] = [
-  // ── SCOS ──────────────────────────────────────────────────────────────────
+  // ── Generic signage device ────────────────────────────────────────────────
   {
-    id: 'scos-001',
-    platform: 'SCOS',
+    id: 'device-001',
+    platform: 'Signage device',
     category: 'Crashes',
-    title: 'SCOS app crash after content update',
-    content: `SCOS (ScreenCloud OS) apps can crash after a content update if the new content contains unsupported media formats or the app bundle is corrupted during download. Steps to resolve:
-1. Check device logs via ScreenCloud dashboard → Device → Logs
+    title: 'Signage device app crash after content update',
+    content: `Signage device apps can crash after a content update if the new content contains unsupported media formats or the app bundle is corrupted during download. Steps to resolve:
+1. Check device logs via the signage provider dashboard
 2. Verify the content URL is accessible from the device network
-3. Force-stop the app via Settings → Apps → ScreenCloud Player → Force Stop
-4. Clear app cache: Settings → Apps → ScreenCloud Player → Storage → Clear Cache
-5. Re-push content from ScreenCloud Studio
-6. If persists, factory reset the SCOS device and re-enroll`,
-    tags: ['crash', 'scos', 'app', 'content update', 'force stop', 'clear cache'],
+3. Force-stop the signage player app from device settings
+4. Clear the signage player app cache from device settings
+5. Re-push content from the signage provider CMS
+6. If the issue persists, factory reset the signage device and re-enroll it`,
+    tags: ['crash', 'signage device', 'app', 'content update', 'force stop', 'clear cache'],
   },
   {
-    id: 'scos-002',
-    platform: 'SCOS',
+    id: 'device-002',
+    platform: 'Signage device',
     category: 'Updates',
-    title: 'SCOS firmware update failure',
-    content: `SCOS firmware update failures are commonly caused by insufficient disk space, network interruptions, or proxy interference. Resolution:
+    title: 'Signage device firmware update failure',
+    content: `Signage device firmware update failures are commonly caused by insufficient disk space, network interruptions, or proxy interference. Resolution:
 1. Ensure at least 2 GB free storage on device
 2. Verify device has stable internet (>5 Mbps) during update window
 3. Disable any content proxy that might intercept OTA traffic
-4. Update OTA endpoint may be: dl.screencloud.com — ensure it's whitelisted
+4. Ensure the signage provider update endpoint is whitelisted
 5. Check update logs at /data/logs/ota.log via ADB
-6. Manual update: download firmware .zip from ScreenCloud support, sideload via ADB:
+6. Manual update: download firmware .zip from the signage provider support portal, then sideload via ADB:
    adb sideload firmware.zip`,
-    tags: ['firmware', 'update', 'ota', 'scos', 'disk space', 'adb'],
+    tags: ['firmware', 'update', 'ota', 'signage device', 'disk space', 'adb'],
   },
   {
-    id: 'scos-003',
-    platform: 'SCOS',
+    id: 'device-003',
+    platform: 'Signage device',
     category: 'Display',
-    title: 'SCOS screen goes blank or black',
-    content: `Screen blanking on SCOS devices usually occurs due to screensaver activation, HDMI handshake failure, or display power settings. Steps:
+    title: 'Signage device screen goes blank or black',
+    content: `Screen blanking on signage devices usually occurs due to screensaver activation, HDMI handshake failure, or display power settings. Steps:
 1. Disable screensaver: Settings → Display → Screen Timeout → Never
 2. Check HDMI cable connection and try a different port
 3. Verify display power management: Settings → Display → Sleep → Never
 4. Enable "Stay Awake" in Developer Options (requires developer mode)
 5. Check if content schedule has gap — empty schedule slots show black
 6. Force wake: adb shell input keyevent KEYCODE_WAKEUP`,
-    tags: ['black screen', 'blank', 'scos', 'hdmi', 'screensaver', 'sleep', 'display'],
+    tags: ['black screen', 'blank', 'signage device', 'hdmi', 'screensaver', 'sleep', 'display'],
   },
   {
-    id: 'scos-004',
-    platform: 'SCOS',
+    id: 'device-004',
+    platform: 'Signage device',
     category: 'Network',
-    title: 'SCOS device offline / not checking in',
-    content: `SCOS devices fail to check in when the ScreenCloud cloud endpoint is unreachable. Diagnostics:
-1. Ping api.screencloud.com from device network
+    title: 'Signage device offline / not checking in',
+    content: `Signage devices fail to check in when the signage provider cloud endpoint is unreachable. Diagnostics:
+1. Ping the signage provider API endpoint from the device network
 2. Ensure TCP port 443 (HTTPS) is open outbound
 3. NTP sync required — ensure time.google.com:123 (UDP) is reachable
 4. Check proxy: Settings → Network → Proxy. Remove if misconfigured
-5. Re-register device: Settings → ScreenCloud → Unregister → Re-pair with new code
+5. Re-register device through the signage provider pairing flow
 6. Factory reset as last resort via Settings → System → Reset`,
-    tags: ['offline', 'network', 'scos', 'check in', 'api', 'proxy', 'ntp'],
+    tags: ['offline', 'network', 'signage device', 'check in', 'api', 'proxy', 'ntp'],
   },
 
   // ── Windows ───────────────────────────────────────────────────────────────
@@ -274,7 +274,7 @@ Resolution options:
 1. Ask site owner to remove or change to SAMEORIGIN if you control the signage domain
 2. Use a server-side proxy: your signage server fetches the URL and strips the header
    Example nginx: proxy_hide_header X-Frame-Options;
-3. Use ScreenCloud's URL App which renders URLs in kiosk mode (not iframe)
+3. Use the signage provider URL app which renders URLs in kiosk mode (not iframe)
 4. Capture static screenshot of the URL and display as image instead
 5. For your own sites: set X-Frame-Options: ALLOW-FROM or remove header entirely`,
     tags: ['iframe', 'x-frame-options', 'deny', 'sameorigin', 'embed', 'block', 'header'],
@@ -296,7 +296,7 @@ Resolution:
    Content-Security-Policy: frame-ancestors 'self' https://player.yoursignage.com
 2. Server-side proxy to strip CSP header (nginx: proxy_hide_header Content-Security-Policy)
 3. Use browser extension or Electron-based kiosk app that ignores CSP
-4. For ScreenCloud: some players run in kiosk mode bypassing iframe restrictions`,
+4. For some signage providers: players may run in kiosk mode bypassing iframe restrictions`,
     tags: ['iframe', 'csp', 'content-security-policy', 'frame-ancestors', 'block', 'embed'],
   },
   {
@@ -312,7 +312,7 @@ Resolution:
 1. Use HTTPS version of the URL — most sites support it
 2. If HTTP-only: set up a reverse proxy on your HTTPS server:
    nginx: proxy_pass http://target-url;
-3. Enable HTTP in ScreenCloud App configuration if the player supports it
+3. Enable HTTP in the signage provider app configuration if the player supports it
 4. For local network resources (HTTP dashboards on LAN): use a local HTTPS proxy
 5. Check if site has HSTS — if so, HTTP version won't work at all
 6. Signage players on local network can sometimes be configured to allow HTTP content`,
@@ -435,9 +435,9 @@ Common issue: certificate validation fails when NTP is broken → clocks out of 
 10. Re-register device: unregister → factory reset → re-pair
 
 Log files to collect for support:
-- SCOS: ScreenCloud dashboard logs
-- Android/FireOS: adb logcat -s ScreenCloudPlayer
-- Windows: %AppData%/ScreenCloud/logs/
+- Signage device: signage provider dashboard logs
+- Android/FireOS: adb logcat -s <player-process>
+- Windows: %AppData%/<player-name>/logs/
 - Tizen: remote debug console
 - webOS: SSH journalctl`,
     tags: ['loading', 'stuck', 'blank', 'troubleshoot', 'cache', 'disk space', 'restart', 'logs'],

@@ -13,7 +13,7 @@ SignageMind AI is a support knowledge base for signage teams. It answers questio
 ## Features
 
 - Chat interface for signage support questions.
-- Built-in knowledge entries for SCOS, Windows, FireOS, Tizen, webOS, iframe playback, and general troubleshooting.
+- Built-in knowledge entries for signage devices, Windows, FireOS, Tizen, webOS, iframe playback, and general troubleshooting.
 - Sourced responses with matched knowledge entries.
 - Troubleshooting steps for common device and player issues.
 - Durable chat session history through file-backed JSON storage.

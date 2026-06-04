@@ -3,7 +3,7 @@ import './globals.css'
 
 export const metadata: Metadata = {
   title: 'SignageMind AI',
-  description: 'Expert AI chatbot for digital signage support — SCOS, Tizen, webOS, FireOS, Windows, Iframe troubleshooting',
+  description: 'Expert AI chatbot for digital signage support — signage devices, Tizen, webOS, FireOS, Windows, Iframe troubleshooting',
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
