@@ -4,6 +4,11 @@ import { useState, useRef, useEffect, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import type { Message, KnowledgeEntry } from '@/lib/types'
 
+type Provider = 'claude' | 'openai'
+
+const KEY_STORAGE = 'signagemind_api_key'
+const PROVIDER_STORAGE = 'signagemind_provider'
+
 interface ApiMessage {
   id: string
   role: 'user' | 'assistant'
@@ -35,15 +40,30 @@ function ChatContent() {
   const [input, setInput] = useState('')
   const [loading, setLoading] = useState(false)
   const [sessionId, setSessionId] = useState<string | null>(null)
+  const [apiKey, setApiKey] = useState('')
+  const [provider, setProvider] = useState<Provider>('claude')
+  const [showSettings, setShowSettings] = useState(false)
+  const [keyDraft, setKeyDraft] = useState('')
   const bottomRef = useRef<HTMLDivElement>(null)
   const didAutoSend = useRef(false)
+
+  // Load the saved key/provider from the browser on mount.
+  useEffect(() => {
+    const savedKey = localStorage.getItem(KEY_STORAGE) ?? ''
+    const savedProvider = localStorage.getItem(PROVIDER_STORAGE)
+    setApiKey(savedKey)
+    setKeyDraft(savedKey)
+    if (savedProvider === 'openai' || savedProvider === 'claude') setProvider(savedProvider)
+  }, [])
 
   useEffect(() => {
     const q = searchParams.get('q')
     if (q && !didAutoSend.current) {
       didAutoSend.current = true
       setInput(q)
-      sendMessage(q)
+      const savedKey = localStorage.getItem(KEY_STORAGE) ?? ''
+      if (savedKey) sendMessage(q, savedKey)
+      else setShowSettings(true)
     }
   }, [])
 
@@ -51,9 +71,30 @@ function ChatContent() {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages, loading])
 
-  async function sendMessage(text?: string) {
+  function saveSettings() {
+    const trimmed = keyDraft.trim()
+    setApiKey(trimmed)
+    localStorage.setItem(KEY_STORAGE, trimmed)
+    localStorage.setItem(PROVIDER_STORAGE, provider)
+    setShowSettings(false)
+  }
+
+  function clearKey() {
+    setApiKey('')
+    setKeyDraft('')
+    localStorage.removeItem(KEY_STORAGE)
+  }
+
+  async function sendMessage(text?: string, keyOverride?: string) {
     const msg = (text ?? input).trim()
     if (!msg || loading) return
+
+    const key = keyOverride ?? apiKey
+    if (!key) {
+      setShowSettings(true)
+      return
+    }
+
     setInput('')
     setLoading(true)
 
@@ -69,9 +110,27 @@ function ChatContent() {
     try {
       const res = await fetch('/api/chat', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'x-api-key': key,
+          'x-ai-provider': provider,
+        },
         body: JSON.stringify({ sessionId, message: msg }),
       })
+      if (res.status === 401) {
+        setShowSettings(true)
+        setMessages(prev => [
+          ...prev,
+          {
+            id: Date.now().toString(),
+            role: 'assistant',
+            content: 'Add a valid API key in Settings to get answers. Your key is stored only in this browser.',
+            sources: [],
+            createdAt: new Date().toISOString(),
+          },
+        ])
+        return
+      }
       const data = (await res.json()) as { sessionId: string; message: ApiMessage }
       setSessionId(data.sessionId)
       setMessages(prev => [...prev, data.message])
@@ -97,6 +156,12 @@ function ChatContent() {
       <div className="flex items-center gap-3 px-4 py-3 border-b border-gray-800 bg-gray-950">
         <a href="/" className="text-gray-500 hover:text-gray-300 text-sm">← Back</a>
         <div className="font-semibold text-gray-200">SignageMind AI</div>
+        <button
+          onClick={() => { setKeyDraft(apiKey); setShowSettings(true) }}
+          className="ml-auto text-sm px-3 py-1.5 rounded-lg border border-gray-700 text-gray-300 hover:border-blue-600 hover:text-white transition"
+        >
+          {apiKey ? '⚙ Key set' : '⚙ Add API key'}
+        </button>
       </div>
 
       {/* Messages */}
@@ -173,6 +238,67 @@ function ChatContent() {
           </button>
         </form>
       </div>
+
+      {/* Settings modal */}
+      {showSettings && (
+        <div className="fixed inset-0 bg-black/70 flex items-center justify-center p-4 z-50" onClick={() => setShowSettings(false)}>
+          <div
+            className="bg-gray-950 border border-gray-800 rounded-2xl w-full max-w-md p-6"
+            onClick={e => e.stopPropagation()}
+          >
+            <div className="text-lg font-semibold text-gray-100 mb-1">API key</div>
+            <p className="text-sm text-gray-500 mb-4">
+              This app uses your own API key. It is stored only in this browser and sent directly with your requests — never saved on the server.
+            </p>
+
+            <label className="block text-xs uppercase tracking-wide text-gray-500 mb-1">Provider</label>
+            <div className="flex gap-2 mb-4">
+              {(['claude', 'openai'] as Provider[]).map(p => (
+                <button
+                  key={p}
+                  onClick={() => setProvider(p)}
+                  className={`flex-1 py-2 rounded-lg text-sm font-medium border transition ${
+                    provider === p
+                      ? 'bg-blue-600 border-blue-500 text-white'
+                      : 'bg-gray-900 border-gray-700 text-gray-300 hover:border-gray-600'
+                  }`}
+                >
+                  {p === 'claude' ? 'Claude (Anthropic)' : 'OpenAI'}
+                </button>
+              ))}
+            </div>
+
+            <label className="block text-xs uppercase tracking-wide text-gray-500 mb-1">
+              {provider === 'claude' ? 'Anthropic API key' : 'OpenAI API key'}
+            </label>
+            <input
+              type="password"
+              value={keyDraft}
+              onChange={e => setKeyDraft(e.target.value)}
+              placeholder={provider === 'claude' ? 'sk-ant-...' : 'sk-...'}
+              className="w-full bg-gray-900 border border-gray-700 rounded-xl px-4 py-3 text-sm text-gray-100 placeholder-gray-600 focus:outline-none focus:border-blue-600 mb-4"
+            />
+
+            <div className="flex gap-2">
+              <button
+                onClick={saveSettings}
+                disabled={!keyDraft.trim()}
+                className="flex-1 py-2.5 bg-blue-600 hover:bg-blue-500 disabled:opacity-40 disabled:cursor-not-allowed rounded-xl text-sm font-medium transition"
+              >
+                Save
+              </button>
+              {apiKey && (
+                <button
+                  onClick={clearKey}
+                  className="px-4 py-2.5 border border-gray-700 text-gray-300 hover:border-red-700 hover:text-red-300 rounded-xl text-sm font-medium transition"
+                >
+                  Clear
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
