@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { nanoid } from 'nanoid'
 import { retrieve } from '@/lib/rag'
-import { chat } from '@/lib/ai'
+import { chat, type AIProvider } from '@/lib/ai'
 import { createSession, getSession, addMessage } from '@/lib/store'
 import type { Message } from '@/lib/types'
 
@@ -38,6 +38,13 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: `sessionId must be ${MAX_SESSION_ID_CHARS} characters or fewer` }, { status: 400 })
     }
 
+    // Bring-your-own-key: the API key is supplied by the user, never stored server-side.
+    const apiKey = request.headers.get('x-api-key') ?? ''
+    const provider: AIProvider = request.headers.get('x-ai-provider') === 'openai' ? 'openai' : 'claude'
+    if (!apiKey) {
+      return NextResponse.json({ error: 'Add your API key in Settings to start chatting.' }, { status: 401 })
+    }
+
     const sid = sessionId ?? nanoid()
     await getSession(sid) ?? await createSession(sid, message)
 
@@ -69,7 +76,7 @@ User question: ${message}`
     // Call AI
     let answer: string
     try {
-      answer = await chat(SYSTEM_PROMPT, userPrompt)
+      answer = await chat(SYSTEM_PROMPT, userPrompt, { provider, apiKey })
     } catch {
       answer = sources.length > 0
         ? `Based on our knowledge base:\n\n${sources[0]?.content ?? 'No information found.'}`
