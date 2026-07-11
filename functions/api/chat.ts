@@ -1,9 +1,11 @@
-import { NextRequest, NextResponse } from 'next/server'
+// Cloudflare Pages Function — serves POST /api/chat.
+// Ported from app/api/chat/route.ts. Sessions persist in Cloudflare KV
+// (binding: SESSIONS_KV) instead of the filesystem, which Workers lack.
 import { nanoid } from 'nanoid'
-import { retrieve } from '@/lib/rag'
-import { chat, type AIProvider } from '@/lib/ai'
-import { createSession, getSession, addMessage } from '@/lib/store'
-import type { Message } from '@/lib/types'
+import { retrieve } from '../../lib/rag'
+import { chat, type AIProvider } from '../../lib/ai'
+import { KVChatRepository, type KVNamespaceLike } from '../../lib/storage/kv'
+import type { Message } from '../../lib/types'
 
 const MAX_MESSAGE_CHARS = 8_000
 const MAX_SESSION_ID_CHARS = 120
@@ -21,43 +23,54 @@ You will be given relevant knowledge base excerpts. Use them to give precise, ac
 Keep answers concise and practical. Use numbered steps for procedures.
 If you don't know something specific, say so — don't guess.`
 
-export async function POST(request: NextRequest) {
+function json(body: unknown, status = 200): Response {
+  return new Response(JSON.stringify(body), {
+    status,
+    headers: { 'content-type': 'application/json' },
+  })
+}
+
+export const onRequestPost = async (context: {
+  request: Request
+  env: { SESSIONS_KV: KVNamespaceLike }
+}): Promise<Response> => {
   try {
-    const { sessionId, message } = (await request.json()) as {
+    const { sessionId, message } = (await context.request.json()) as {
       sessionId?: string
       message: string
     }
 
     if (!message || typeof message !== 'string') {
-      return NextResponse.json({ error: 'message is required' }, { status: 400 })
+      return json({ error: 'message is required' }, 400)
     }
     if (message.length > MAX_MESSAGE_CHARS) {
-      return NextResponse.json({ error: `message must be ${MAX_MESSAGE_CHARS} characters or fewer` }, { status: 413 })
+      return json({ error: `message must be ${MAX_MESSAGE_CHARS} characters or fewer` }, 413)
     }
     if (sessionId && sessionId.length > MAX_SESSION_ID_CHARS) {
-      return NextResponse.json({ error: `sessionId must be ${MAX_SESSION_ID_CHARS} characters or fewer` }, { status: 400 })
+      return json({ error: `sessionId must be ${MAX_SESSION_ID_CHARS} characters or fewer` }, 400)
     }
 
     // Bring-your-own-key: the API key is supplied by the user, never stored server-side.
-    const apiKey = request.headers.get('x-api-key') ?? ''
-    const provider: AIProvider = request.headers.get('x-ai-provider') === 'openai' ? 'openai' : 'claude'
+    const apiKey = context.request.headers.get('x-api-key') ?? ''
+    const provider: AIProvider = context.request.headers.get('x-ai-provider') === 'openai' ? 'openai' : 'claude'
     if (!apiKey) {
-      return NextResponse.json({ error: 'Add your API key in Settings to start chatting.' }, { status: 401 })
+      return json({ error: 'Add your API key in Settings to start chatting.' }, 401)
     }
 
+    const repo = new KVChatRepository(context.env.SESSIONS_KV)
+
     const sid = sessionId ?? nanoid()
-    await getSession(sid) ?? await createSession(sid, message)
+    ;(await repo.getSession(sid)) ?? (await repo.createSession(sid, message))
 
     // Retrieve relevant knowledge
     const sources = retrieve(message, 3)
 
-    // Build context from sources
-    const context = sources.length > 0
+    const contextText = sources.length > 0
       ? sources.map(s => `## ${s.platform} — ${s.title}\n${s.content}`).join('\n\n---\n\n')
       : 'No specific knowledge base entries matched. Answer from general expertise.'
 
     const userPrompt = `Relevant knowledge base context:
-${context}
+${contextText}
 
 ---
 
@@ -71,7 +84,7 @@ User question: ${message}`
       sources: [],
       createdAt: new Date().toISOString(),
     }
-    await addMessage(sid, userMsg)
+    await repo.addMessage(sid, userMsg)
 
     // Call AI
     let answer: string
@@ -91,11 +104,11 @@ User question: ${message}`
       sources,
       createdAt: new Date().toISOString(),
     }
-    await addMessage(sid, assistantMsg)
+    await repo.addMessage(sid, assistantMsg)
 
-    return NextResponse.json({ sessionId: sid, message: assistantMsg })
+    return json({ sessionId: sid, message: assistantMsg })
   } catch (error) {
     console.error('POST /api/chat error:', error)
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+    return json({ error: 'Internal server error' }, 500)
   }
 }
